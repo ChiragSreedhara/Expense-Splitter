@@ -12,3 +12,20 @@ def get_connection():
         password=os.getenv('DB_PASSWORD'),
         database=os.getenv('DB_NAME')
     )
+
+# connection = get_connection()
+# with connection.cursor() as cursor:
+#     cursor.execute("DESCRIBE users;")
+#     for row in cursor.fetchall():
+#         print(row)
+
+# try:
+#     with connection.cursor() as cursor:
+#         cursor.execute("INSERT INTO users (id, username) VALUES (1, 'Test User')")
+#     connection.commit()
+#     print("Test user inserted successfully.")
+# except Exception as e:
+#     print("Error inserting test user:", e)
+# finally:
+#     connection.close()
+
