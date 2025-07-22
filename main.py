@@ -66,6 +66,16 @@ def create_new_group(data: dict = Body(...)):
         return {"error": str(e)}
     
 
+#optimization endpoint
+@app.get("/groups/{group_id}/balances")
+def get_group_balances(group_id: int):
+    try:
+        balances = get_optimized_balances(group_id)
+        return {"group_id": group_id, "optimized_balances": balances}
+    except Exception as e:
+        traceback.print_exc()
+        return {"error": str(e)}
+
 
 
 

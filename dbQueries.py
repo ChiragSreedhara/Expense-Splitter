@@ -108,6 +108,62 @@ def add_user_to_group(user_id, group_id):
 
 
 
+#optimization logic for a group
+def get_optimized_balances(group_id):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT e.id AS expense_id, e.amount, e.payer_id, er.user_id AS recipient_id
+        FROM expenses e
+        JOIN expense_recipients er ON e.id = er.expense_id
+        WHERE e.group_id = %s
+    """, (group_id,))
+    rows = cursor.fetchall()
+
+    columns = [desc[0] for desc in cursor.description] #convert to dict
+    rows = [dict(zip(columns, row)) for row in rows]
+
+    balances = {}  # balances[debtor][creditor] = amount
+
+    for row in rows:
+        payer = row["payer_id"]
+        recipient = row["recipient_id"]
+        amount = row["amount"]
+
+        num_recipients = sum(1 for r in rows if r["expense_id"] == row["expense_id"])
+        share = amount / num_recipients
+
+        if payer != recipient:
+            balances.setdefault(recipient, {}).setdefault(payer, 0)
+            balances[recipient][payer] += share
+
+    users = set(balances.keys()) | {payer for creditors in balances.values() for payer in creditors}
+    users = list(users)
+
+    net_balances = {user: {} for user in users}
+
+    for debtor in balances:
+        for creditor in balances[debtor]:
+            amount = balances[debtor][creditor]
+            net_balances[debtor][creditor] = net_balances[debtor].get(creditor, 0) + amount
+            net_balances[creditor][debtor] = net_balances[creditor].get(debtor, 0) - amount
+
+    final_balances = []
+    for debtor in net_balances:
+        for creditor in net_balances[debtor]:
+            amount = net_balances[debtor][creditor]
+            if amount > 0:
+                final_balances.append({
+                    "from_user_id": debtor,
+                    "to_user_id": creditor,
+                    "amount": round(amount, 2)
+                })
+
+    cursor.close()
+    connection.close()
+    return final_balances
+
 
 
 
