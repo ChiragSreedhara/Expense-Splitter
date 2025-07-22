@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS group_members (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- sample for testing, can remove
 INSERT INTO users (id, username) VALUES (1, 'Test User');
 INSERT INTO users (id, username) VALUES (2, '3Test User');
 INSERT INTO users (id, username) VALUES (3, '2Test User');

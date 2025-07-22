@@ -174,7 +174,7 @@ def get_optimized_balances(group_id):
 
 
 
-#for debugging
+#for debugging, can remove
 def run_raw_sql(query, params=None):
     conn = get_connection()
     cursor = conn.cursor()

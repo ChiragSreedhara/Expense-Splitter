@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Query, Body
 from database import get_connection
 from schemas import ExpenseCreate
 from dbQueries import *
-import logging #debug, remove later
+import logging #debugging
 import traceback #^
 
 
@@ -13,7 +13,7 @@ app = FastAPI()
 @app.post("/expenses")
 def create_expense_endpoint(data: dict = Body(...)):
     try:
-        group_id = data.get("group_id")  # Optional
+        group_id = data.get("group_id")  #group id is an optional enrty
         payer_id = data["payer_id"]
         amount = data["amount"]
         description = data.get("description", "")
@@ -81,7 +81,7 @@ def get_group_balances(group_id: int):
 
 
 
-#temp debug endpoints,remove later
+#temp debug endpoints, can remove
 from dbQueries import run_raw_sql
 @app.get("/debug/groups")#displays all groups
 def debug_groups():
