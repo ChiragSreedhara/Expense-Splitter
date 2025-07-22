@@ -1,13 +1,21 @@
-CREATE TABLE IF NOT EXISTS users (
+
+DROP TABLE IF EXISTS expense_recipients;
+DROP TABLE IF EXISTS expenses;
+DROP TABLE IF EXISTS group_members;
+DROP TABLE IF EXISTS users;
+
+
+
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL
 );
 
-DROP TABLE IF EXISTS expenses;
+
 
 CREATE TABLE expenses (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    group_id INT NOT NULL,
+    group_id INT,  -- note this can be null if its a one on one typa expense
     payer_id INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     description VARCHAR(255),
@@ -15,6 +23,8 @@ CREATE TABLE expenses (
     FOREIGN KEY (group_id) REFERENCES `groups`(id),
     FOREIGN KEY (payer_id) REFERENCES users(id)
 );
+
+
 
 CREATE TABLE expense_recipients (
     expense_id INT NOT NULL,
@@ -37,3 +47,7 @@ CREATE TABLE IF NOT EXISTS group_members (
     FOREIGN KEY (group_id) REFERENCES `groups`(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+INSERT INTO users (id, username) VALUES (1, 'Test User');
+INSERT INTO users (id, username) VALUES (2, '3Test User');
+INSERT INTO users (id, username) VALUES (3, '2Test User');

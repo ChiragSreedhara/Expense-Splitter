@@ -1,47 +1,51 @@
 from fastapi import FastAPI, HTTPException, Query, Body
 from database import get_connection
 from schemas import ExpenseCreate
-from dbQueries import create_group, add_user_to_group
+from dbQueries import *
 import logging #debug, remove later
 import traceback #^
 
 
 app = FastAPI()
 
-@app.post("/expense")
-def create_expense(expense: ExpenseCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
-
+#expense endpoints
+@app.post("/expenses")
+@app.post("/expenses")
+def create_expense_endpoint(data: dict = Body(...)):
     try:
-        query = "INSERT INTO expenses (user_id, amount, description) VALUES (%s, %s, %s)"
-        cursor.execute(query, (expense.user_id, expense.amount, expense.description))
-        conn.commit()
-        return {"message": "Expense created successfully"}
+        group_id = data.get("group_id")  # Optional
+        payer_id = data["payer_id"]
+        amount = data["amount"]
+        description = data.get("description", "")
+        recipient_ids = data.get("recipient_ids", [])
+
+        # Create the expense
+        expense_id = create_expense(group_id, payer_id, amount, description)
+        if expense_id is None:
+            return {"error": "Failed to create expense"}
+
+        # Add recipients
+        for rid in recipient_ids:
+            add_expense_recipient(expense_id, rid)
+
+        return {"message": "Expense created", "expense_id": expense_id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
+        return {"error": str(e)}
+
 
 
 @app.get("/expenses")
-def get_expenses(user_id: int = Query(..., description="User ID to fetch expenses for")):
-    conn = get_connection()
-    cursor = conn.cursor()
+def get_expenses():
     try:
-        cursor.execute("SELECT id, user_id, amount, description FROM expenses WHERE user_id = %s", (user_id,))
-        results = cursor.fetchall()
-        expenses = [
-            {"id": row[0], "user_id": row[1], "amount": float(row[2]), "description": row[3]} for row in results
-        ]
-        return expenses
+        expenses = get_all_expenses()
+        return {"expenses": expenses}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
+        return {"error": str(e)}
 
+
+
+
+#group endpoints
 @app.post("/groups")
 def create_new_group(data: dict = Body(...)):
     try:
@@ -96,12 +100,12 @@ def reset_db():
 
     CREATE TABLE expenses (
         id INT PRIMARY KEY AUTO_INCREMENT,
-        group_id INT NOT NULL,
+        group_id INT,
         payer_id INT NOT NULL,
         amount DECIMAL(10, 2) NOT NULL,
         description VARCHAR(255),
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (group_id) REFERENCES groups(id),
+        FOREIGN KEY (group_id) REFERENCES `groups`(id),
         FOREIGN KEY (payer_id) REFERENCES users(id)
     );
 

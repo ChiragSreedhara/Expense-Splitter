@@ -1,5 +1,72 @@
 from database import get_connection
 
+#expense logic
+def create_expense(group_id, payer_id, amount, description):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # If group_id is falsy (None, 0, ''), store NULL in DB
+        group_id_sql = group_id if group_id else None
+        cursor.execute("""
+            INSERT INTO expenses (group_id, payer_id, amount, description)
+            VALUES (%s, %s, %s, %s)
+        """, (group_id_sql, payer_id, amount, description))
+        conn.commit()
+        return cursor.lastrowid
+    except Exception as e:
+        print(f"Error creating expense: {e}")
+        conn.rollback()
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+def add_expense_recipient(expense_id, user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO expense_recipients (expense_id, user_id) VALUES (%s, %s)",
+            (expense_id, user_id)
+        )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+def get_all_expenses():
+    conn = get_connection()
+    cursor = conn.cursor()  # No dictionary=True
+    try:
+        cursor.execute("""
+            SELECT e.id, e.group_id, e.payer_id, u.username AS payer_name, e.amount, e.description
+            FROM expenses e
+            JOIN users u ON e.payer_id = u.id
+        """)
+        results = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+        expenses = [dict(zip(columns, row)) for row in results]
+        return expenses
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+
+
+
+
+
+#group logic
 def create_group(group_name):
     conn = get_connection()
     cursor = conn.cursor()
@@ -37,6 +104,18 @@ def add_user_to_group(user_id, group_id):
     finally:
         cursor.close()
         conn.close()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #for debugging
